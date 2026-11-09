@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DC Motor Monitoring System | Telemetry & Fault Diagnostics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #fafafa;
+            color: #18181b;
+        }
+        /* Custom subtle scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d8;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1aa;
+        }
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased bg-zinc-50 min-h-screen text-zinc-900 flex flex-col justify-between selection:bg-blue-100 selection:text-blue-700">
+
+    <!-- Top Header Navigation -->
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-zinc-900 text-white flex items-center justify-center rounded-lg font-bold text-lg shadow-sm">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="font-bold text-zinc-900 text-base leading-none">DC Motor Monitor</h1>
+                        <span class="px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-600 rounded border border-zinc-200">v0.0.1-SNAPSHOT</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-0.5">DevOps Mini-Project &bull; Java 21 Engine</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-2 text-xs text-zinc-600 bg-zinc-100 px-3 py-1.5 rounded-md border border-zinc-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="font-medium">System Telemetry Online</span>
+                </div>
+                
+                <button onclick="toggleDevOpsModal()" class="inline-flex items-center space-x-1.5 text-xs font-medium text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-300 px-3 py-1.5 rounded-md transition shadow-sm">
+                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span>CI Pipeline Architecture</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
+
+        <!-- Top Overview Banner -->
+        <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-blue-600">Electronics & Communication Engineering</span>
+                        <span class="text-zinc-300">&bull;</span>
+                        <span class="text-xs font-semibold text-zinc-500">HEMANTH A</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-zinc-900 mt-0.5">DC Motor Diagnostics & Fault Classification Engine</h2>
+                    <p class="text-sm text-zinc-600 mt-1 max-w-3xl">
+                        Simulating real-time sensor measurements (RPM, Current, Voltage, Temp) against exact Java <code class="bg-zinc-100 text-blue-700 px-1.5 py-0.5 rounded text-xs font-mono border border-zinc-200">MotorMonitor</code> decision rules.
+                    </p>
+                </div>
+                
+                <!-- Quick Test Preset Buttons -->
+                <div class="flex flex-wrap gap-1.5 max-w-lg lg:justify-end">
+                    <span class="w-full text-xs font-semibold text-zinc-500 mb-1 block">Execute JUnit Test Scenarios:</span>
+                    <button onclick="applyPreset(1800, 5.0, 12.0, 45.0, 'Normal Operation')" class="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100 transition">#1 Normal</button>
+                    <button onclick="applyPreset(1800, 15.0, 12.0, 45.0, 'Overload Fault')" class="px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded hover:bg-amber-100 transition">#2 Overload</button>
+                    <button onclick="applyPreset(1800, 5.0, 12.0, 85.0, 'Overheating Fault')" class="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100 transition">#3 Temp High</button>
+                    <button onclick="applyPreset(300, 5.0, 12.0, 45.0, 'Under Speed Fault')" class="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 transition">#4 Low RPM</button>
+                    <button onclick="applyPreset(3500, 5.0, 12.0, 45.0, 'Over Speed Fault')" class="px-2.5 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-100 transition">#5 High RPM</button>
+                    <button onclick="applyPreset(1800, 5.0, 8.0, 45.0, 'Under Voltage Fault')" class="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100 transition">#6 Low Volt</button>
+                    <button onclick="applyPreset(1800, 5.0, 16.0, 45.0, 'Over Voltage Fault')" class="px-2.5 py-1 text-xs font-medium bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 rounded hover:bg-fuchsia-100 transition">#7 High Volt</button>
+                    <button onclick="applyPreset(1800, 14.0, 12.0, 90.0, 'Multiple Faults')" class="px-2.5 py-1 text-xs font-medium bg-red-100 text-red-800 border border-red-300 rounded hover:bg-red-200 transition font-bold">#8 Multi Fault</button>
+                    <button onclick="applyPreset(-100, 5.0, 12.0, 45.0, 'Invalid Input')" class="px-2.5 py-1 text-xs font-medium bg-zinc-200 text-zinc-800 border border-zinc-400 rounded hover:bg-zinc-300 transition">#9 Invalid</button>
+                    <button onclick="applyPreset(3000, 10.0, 14.0, 80.0, 'Boundary Limits')" class="px-2.5 py-1 text-xs font-medium bg-cyan-50 text-cyan-700 border border-cyan-200 rounded hover:bg-cyan-100 transition">#10 Boundary</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Central Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Panel: Motor Rotor Canvas & Primary Status Banner (5 cols) -->
+            <div class="lg:col-span-5 space-y-6 flex flex-col justify-between">
+                
+                <!-- Live Evaluation Status Card -->
+                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-zinc-100 pb-3 mb-4">
+                        <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Evaluation Engine Output</span>
+                        <span id="timestamp-badge" class="font-mono text-xs text-zinc-400">Live</span>
+                    </div>
+
+                    <!-- Evaluated Status Container -->
+                    <div>
+                        <span class="text-xs font-medium text-zinc-500 block mb-1">Evaluated Status Set:</span>
+                        <div id="status-container" class="flex flex-wrap gap-2 min-h-[44px] items-center">
+                            <!-- Injected by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Condition Description -->
+                    <div class="mt-4 pt-3 border-t border-zinc-100 bg-zinc-50 rounded-lg p-3">
+                        <span class="text-xs font-semibold text-zinc-700 block">Diagnostic Summary:</span>
+                        <p id="diagnostic-summary" class="text-xs text-zinc-600 mt-0.5 leading-relaxed">
+                            Motor operating within healthy bounds. All physical parameters are within standard limits.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rotor Animation Visualizer -->
+                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+                    <div class="w-full flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">DC Motor Rotor Dynamics</span>
+                        <span id="canvas-rpm-display" class="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">1800 RPM</span>
+                    </div>
+
+                    <div class="relative py-4">
+                        <canvas id="rotorCanvas" width="220" height="220" class="mx-auto drop-shadow-sm"></canvas>
+                        
+                        <!-- Center Motor Hub Label -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">SHAFT</span>
+                            <span id="rotor-status-dot" class="w-3 h-3 rounded-full bg-emerald-500 mt-1 shadow-sm"></span>
+                        </div>
+                    </div>
+
+                    <div class="w-full grid grid-cols-2 gap-2 mt-2 text-center text-xs">
+                        <div class="bg-zinc-50 p-2 rounded border border-zinc-100">
+                            <span class="text-zinc-400 block text-[10px]">ROTOR DIRECTION</span>
+                            <span class="font-semibold text-zinc-700">Clockwise (CW)</span>
+                        </div>
+                        <div class="bg-zinc-50 p-2 rounded border border-zinc-100">
+                            <span class="text-zinc-400 block text-[10px]">LOAD STATE</span>
+                            <span id="load-state-text" class="font-semibold text-zinc-700">Standard</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: Telemetry Sliders & Gauges (7 cols) -->
+            <div class="lg:col-span-7 bg-white border border-zinc-200 rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-6">
+                
+                <div class="border-b border-zinc-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-zinc-900 text-base">Telemetry Parameter Controls</h3>
+                        <p class="text-xs text-zinc-500">Adjust parameters or use presets to test boundary & fault conditions</p>
+                    </div>
+                    <button onclick="resetToDefaults()" class="text-xs font-medium text-zinc-600 hover:text-blue-600 border border-zinc-200 px-2.5 py-1 rounded bg-zinc-50 hover:bg-white transition">
+                        Reset Defaults
+                    </button>
+                </div>
+
+                <!-- 4 Interactive Parameter Controllers -->
+                <div class="space-y-5">
+                    
+                    <!-- 1. RPM Slider -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm">
+                            <label for="rpmInput" class="font-semibold text-zinc-800 flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>
+                                <span>Rotational Speed (RPM)</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-zinc-400">Limit: 500 - 3000</span>
+                                <input type="number" id="rpmInput" min="-500" max="5000" step="50" value="1800" 
+                                    class="w-24 px-2 py-1 text-right font-mono font-semibold text-zinc-900 bg-zinc-50 border border-zinc-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs">
+                                <span class="text-xs font-medium text-zinc-500 w-8">RPM</span>
+                            </div>
+                        </div>
+                        <input type="range" id="rpmSlider" min="0" max="4000" step="10" value="1800" class="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+                            <span>0 RPM</span>
+                            <span class="text-blue-600 font-bold">500 (Min Threshold)</span>
+                            <span class="text-blue-600 font-bold">3000 (Max Threshold)</span>
+                            <span>4000 RPM</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Current Slider -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm">
+                            <label for="currentInput" class="font-semibold text-zinc-800 flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                                <span>Armature Current</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-zinc-400">Max Limit: 10.0 A</span>
+                                <input type="number" id="currentInput" min="-5" max="30" step="0.5" value="5.0" 
+                                    class="w-24 px-2 py-1 text-right font-mono font-semibold text-zinc-900 bg-zinc-50 border border-zinc-300 rounded focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs">
+                                <span class="text-xs font-medium text-zinc-500 w-8">A</span>
+                            </div>
+                        </div>
+                        <input type="range" id="currentSlider" min="0" max="25" step="0.1" value="5.0" class="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+                            <span>0.0 A</span>
+                            <span class="text-amber-600 font-bold">10.0 A (Overload Limit)</span>
+                            <span>25.0 A</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Voltage Slider -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm">
+                            <label for="voltageInput" class="font-semibold text-zinc-800 flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span>
+                                <span>Terminal Voltage</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-zinc-400">Limit: 10.0 - 14.0 V</span>
+                                <input type="number" id="voltageInput" min="-5" max="25" step="0.5" value="12.0" 
+                                    class="w-24 px-2 py-1 text-right font-mono font-semibold text-zinc-900 bg-zinc-50 border border-zinc-300 rounded focus:ring-2 focus:ring-purple-500 focus:outline-none text-xs">
+                                <span class="text-xs font-medium text-zinc-500 w-8">V</span>
+                            </div>
+                        </div>
+                        <input type="range" id="voltageSlider" min="0" max="20" step="0.1" value="12.0" class="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+                            <span>0.0 V</span>
+                            <span class="text-purple-600 font-bold">10.0 V (Min)</span>
+                            <span class="text-purple-600 font-bold">14.0 V (Max)</span>
+                            <span>20.0 V</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Temperature Slider -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center text-sm">
+                            <label for="tempInput" class="font-semibold text-zinc-800 flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                                <span>Core Temperature</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-zinc-400">Max Limit: 80.0 °C</span>
+                                <input type="number" id="tempInput" min="-300" max="150" step="1" value="45.0" 
+                                    class="w-24 px-2 py-1 text-right font-mono font-semibold text-zinc-900 bg-zinc-50 border border-zinc-300 rounded focus:ring-2 focus:ring-rose-500 focus:outline-none text-xs">
+                                <span class="text-xs font-medium text-zinc-500 w-8">°C</span>
+                            </div>
+                        </div>
+                        <input type="range" id="tempSlider" min="-10" max="120" step="0.5" value="45.0" class="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+                            <span>-10 °C</span>
+                            <span class="text-rose-600 font-bold">80.0 °C (Overheat Limit)</span>
+                            <span>120 °C</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Log Telemetry Snapshot Action -->
+                <div class="pt-3 border-t border-zinc-100 flex items-center justify-between">
+                    <span class="text-xs text-zinc-500">Log snapshot to project execution table</span>
+                    <button onclick="logCurrentSnapshot()" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg transition shadow-sm flex items-center space-x-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Record Snapshot</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Bottom Execution Log Table -->
+        <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-zinc-900 text-base">Telemetry History & Fault Diagnostic Log</h3>
+                    <p class="text-xs text-zinc-500">History of evaluated motor states matching JUnit test case outputs</p>
+                </div>
+                <button onclick="clearLogTable()" class="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded transition">
+                    Clear Log History
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 uppercase font-mono">
+                            <th class="py-2.5 px-3 font-semibold">#</th>
+                            <th class="py-2.5 px-3 font-semibold">Time</th>
+                            <th class="py-2.5 px-3 font-semibold">RPM</th>
+                            <th class="py-2.5 px-3 font-semibold">Current (A)</th>
+                            <th class="py-2.5 px-3 font-semibold">Voltage (V)</th>
+                            <th class="py-2.5 px-3 font-semibold">Temp (°C)</th>
+                            <th class="py-2.5 px-3 font-semibold">Evaluated Status Set</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body" class="divide-y divide-zinc-100 font-mono">
+                        <!-- Log rows injected dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-zinc-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500">
+            <p>&copy; 2026 DC Motor Monitoring System &bull; Developed by <span class="font-semibold text-zinc-700">HEMANTH A</span></p>
+            <p class="mt-2 sm:mt-0 font-mono">Java 21 &bull; JUnit 5 &bull; Maven &bull; Git &bull; Jenkins CI</p>
+        </div>
+    </footer>
+
+    <!-- DevOps Pipeline Architecture Modal -->
+    <div id="devops-modal" class="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white border border-zinc-200 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative space-y-5">
+            
+            <button onclick="toggleDevOpsModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-600">DevOps Continuous Integration Architecture</span>
+                <h3 class="text-xl font-bold text-zinc-900 mt-0.5">Automated Build & Testing Flow</h3>
+            </div>
+
+            <!-- Flow Diagram Card -->
+            <div class="bg-zinc-50 border border-zinc-200 rounded-xl p-4">
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 text-center text-xs font-medium">
+                    <div class="bg-white p-3 rounded-lg border border-zinc-200 shadow-sm">
+                        <span class="block text-zinc-400 text-[10px] font-mono">IDE</span>
+                        <span class="font-bold text-zinc-800">Eclipse</span>
+                    </div>
+                    <div class="hidden sm:flex items-center justify-center text-zinc-300">&rarr;</div>
+                    <div class="bg-white p-3 rounded-lg border border-zinc-200 shadow-sm">
+                        <span class="block text-zinc-400 text-[10px] font-mono">SCM</span>
+                        <span class="font-bold text-zinc-800">Git & GitHub</span>
+                    </div>
+                    <div class="hidden sm:flex items-center justify-center text-zinc-300">&rarr;</div>
+                    <div class="bg-white p-3 rounded-lg border border-zinc-200 shadow-sm">
+                        <span class="block text-zinc-400 text-[10px] font-mono">CI SERVER</span>
+                        <span class="font-bold text-blue-600">Jenkins (8081)</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-center text-xs text-zinc-500 font-mono">
+                    Build Step: <code class="bg-zinc-200 px-2 py-0.5 rounded text-zinc-800 font-bold">mvn clean test</code> &bull; JUnit 5 Automated Verification
+                </div>
+            </div>
+
+            <!-- Tech Stack Pills -->
+            <div class="space-y-2">
+                <span class="text-xs font-semibold text-zinc-700 block">System Components:</span>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    <div class="bg-zinc-50 p-2 rounded border border-zinc-200">
+                        <span class="text-zinc-400 block text-[10px]">JDK VERSION</span>
+                        <span class="font-bold text-zinc-800">Java JDK 21</span>
+                    </div>
+                    <div class="bg-zinc-50 p-2 rounded border border-zinc-200">
+                        <span class="text-zinc-400 block text-[10px]">TEST FRAMEWORK</span>
+                        <span class="font-bold text-zinc-800">JUnit 5 (Jupiter)</span>
+                    </div>
+                    <div class="bg-zinc-50 p-2 rounded border border-zinc-200">
+                        <span class="text-zinc-400 block text-[10px]">BUILD ENGINE</span>
+                        <span class="font-bold text-zinc-800">Apache Maven 3.x</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-zinc-100 text-right">
+                <button onclick="toggleDevOpsModal()" class="px-4 py-2 bg-zinc-900 text-white text-xs font-semibold rounded-lg hover:bg-zinc-800 transition">
+                    Close Architecture Overview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic (Mirroring MotorMonitor.java) -->
+    <script>
+        // Threshold Configurations matching Java MotorMonitor class
+        const THRESHOLDS = {
+            minRpm: 500.0,
+            maxRpm: 3000.0,
+            maxCurrent: 10.0,
+            minVoltage: 10.0,
+            maxVoltage: 14.0,
+            maxTemperature: 80.0
+        };
+
+        // Global State
+        let logCounter = 0;
+        let animationFrameId;
+        let angle = 0;
+
+        // Canvas Elements
+        const canvas = document.getElementById('rotorCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initial setup on window load
+        window.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            evaluateAndRender();
+            startCanvasAnimation();
+        });
+
+        function setupEventListeners() {
+            const inputs = ['rpm', 'current', 'voltage', 'temp'];
+            
+            inputs.forEach(param => {
+                const slider = document.getElementById(`${param}Slider`);
+                const numInput = document.getElementById(`${param}Input`);
+
+                slider.addEventListener('input', (e) => {
+                    numInput.value = e.target.value;
+                    evaluateAndRender();
+                });
+
+                numInput.addEventListener('input', (e) => {
+                    slider.value = e.target.value;
+                    evaluateAndRender();
+                });
+            });
+        }
+
+        // Exact Implementation of Java MotorMonitor.evaluateStatus(MotorData data)
+        function evaluateStatus(rpm, current, voltage, temperature) {
+            const statusSet = new Set();
+
+            // 1. Validation check for negative physical values (matching Java logic)
+            if (rpm < 0 || current < 0 || voltage < 0 || temperature < -273.15) {
+                statusSet.add("INVALID_INPUT");
+                return statusSet;
+            }
+
+            // 2. Evaluate individual fault conditions
+            if (current > THRESHOLDS.maxCurrent) {
+                statusSet.add("OVERLOAD");
+            }
+            if (temperature > THRESHOLDS.maxTemperature) {
+                statusSet.add("OVERHEATING");
+            }
+            if (rpm < THRESHOLDS.minRpm) {
+                statusSet.add("UNDER_SPEED");
+            }
+            if (rpm > THRESHOLDS.maxRpm) {
+                statusSet.add("OVER_SPEED");
+            }
+            if (voltage < THRESHOLDS.minVoltage) {
+                statusSet.add("UNDER_VOLTAGE");
+            }
+            if (voltage > THRESHOLDS.maxVoltage) {
+                statusSet.add("OVER_VOLTAGE");
+            }
+
+            // 3. If no faults detected, status is NORMAL
+            if (statusSet.size === 0) {
+                statusSet.add("NORMAL");
+            }
+
+            return statusSet;
+        }
+
+        function evaluateAndRender() {
+            const rpm = parseFloat(document.getElementById('rpmInput').value) || 0;
+            const current = parseFloat(document.getElementById('currentInput').value) || 0;
+            const voltage = parseFloat(document.getElementById('voltageInput').value) || 0;
+            const temp = parseFloat(document.getElementById('tempInput').value) || 0;
+
+            // Run Rule Engine
+            const statuses = evaluateStatus(rpm, current, voltage, temp);
+
+            // Update UI elements
+            renderStatusBadges(statuses);
+            updateCanvasLabels(rpm, statuses);
+            updateDiagnosticSummary(statuses, rpm, current, voltage, temp);
+        }
+
+        function renderStatusBadges(statuses) {
+            const container = document.getElementById('status-container');
+            const dot = document.getElementById('rotor-status-dot');
+            container.innerHTML = '';
+
+            const badgeStyles = {
+                'NORMAL': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                'OVERLOAD': 'bg-amber-100 text-amber-800 border-amber-300',
+                'OVERHEATING': 'bg-rose-100 text-rose-800 border-rose-300',
+                'UNDER_SPEED': 'bg-blue-100 text-blue-800 border-blue-300',
+                'OVER_SPEED': 'bg-indigo-100 text-indigo-800 border-indigo-300',
+                'UNDER_VOLTAGE': 'bg-purple-100 text-purple-800 border-purple-300',
+                'OVER_VOLTAGE': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+                'INVALID_INPUT': 'bg-zinc-800 text-white border-zinc-900'
+            };
+
+            if (statuses.has('NORMAL')) {
+                dot.className = "w-3 h-3 rounded-full bg-emerald-500 shadow-sm animate-pulse";
+            } else if (statuses.has('INVALID_INPUT')) {
+                dot.className = "w-3 h-3 rounded-full bg-zinc-900 shadow-sm";
+            } else {
+                dot.className = "w-3 h-3 rounded-full bg-rose-500 shadow-sm animate-ping";
+            }
+
+            statuses.forEach(status => {
+                const span = document.createElement('span');
+                const style = badgeStyles[status] || 'bg-zinc-100 text-zinc-800 border-zinc-300';
+                span.className = `px-3 py-1.5 text-xs font-mono font-bold rounded-md border shadow-sm ${style}`;
+                span.textContent = status;
+                container.appendChild(span);
+            });
+
+            document.getElementById('timestamp-badge').textContent = new Date().toLocaleTimeString();
+        }
+
+        function updateCanvasLabels(rpm, statuses) {
+            document.getElementById('canvas-rpm-display').textContent = `${rpm} RPM`;
+            
+            const loadText = document.getElementById('load-state-text');
+            if (statuses.has('OVERLOAD')) {
+                loadText.textContent = 'HIGH LOAD (OVERLOAD)';
+                loadText.className = 'font-semibold text-amber-600';
+            } else if (statuses.has('NORMAL')) {
+                loadText.textContent = 'Optimal Load';
+                loadText.className = 'font-semibold text-emerald-600';
+            } else {
+                loadText.textContent = 'Abnormal Load';
+                loadText.className = 'font-semibold text-zinc-700';
+            }
+        }
+
+        function updateDiagnosticSummary(statuses, rpm, current, voltage, temp) {
+            const summary = document.getElementById('diagnostic-summary');
+
+            if (statuses.has('INVALID_INPUT')) {
+                summary.textContent = "CRITICAL: Physical sensor parameters cannot be negative (e.g. negative RPM or Current). Please correct inputs.";
+                return;
+            }
+
+            if (statuses.has('NORMAL')) {
+                summary.textContent = `DC Motor operating normally. RPM (${rpm}), Current (${current}A), Voltage (${voltage}V), and Core Temp (${temp}°C) are within safe boundaries.`;
+                return;
+            }
+
+            const activeFaults = Array.from(statuses).join(', ');
+            summary.textContent = `WARNING: Motor engine detected the following fault state(s): [${activeFaults}]. Inspect physical assembly or power unit.`;
+        }
+
+        // Canvas Animation Loop
+        function startCanvasAnimation() {
+            function draw() {
+                const rpm = parseFloat(document.getElementById('rpmInput').value) || 0;
+                const effectiveRpm = Math.max(0, rpm);
+                
+                // Calculate rotation speed proportional to RPM
+                const speed = (effectiveRpm / 60) * 0.05;
+                angle += speed;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const outerRadius = 85;
+                const innerRadius = 35;
+
+                // Outer Stator Housing
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, outerRadius + 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#f4f4f5';
+                ctx.fill();
+                ctx.strokeStyle = '#e4e4e7';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // Stator Magnet Poles (Top, Bottom, Left, Right)
+                const poles = [0, Math.PI/2, Math.PI, (3*Math.PI)/2];
+                poles.forEach(pAngle => {
+                    const px = centerX + Math.cos(pAngle) * outerRadius;
+                    const py = centerY + Math.sin(pAngle) * outerRadius;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 12, 0, Math.PI * 2);
+                    ctx.fillStyle = '#3f3f46';
+                    ctx.fill();
+                });
+
+                // Rotating Rotor Body
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle);
+
+                // Rotor Coils / Windings (4 blades)
+                for (let i = 0; i < 4; i++) {
+                    ctx.rotate(Math.PI / 2);
+                    ctx.beginPath();
+                    ctx.rect(-12, -outerRadius + 10, 24, outerRadius - 15);
+                    ctx.fillStyle = (i % 2 === 0) ? '#2563eb' : '#3b82f6';
+                    ctx.fill();
+                    ctx.strokeStyle = '#1d4ed8';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // Inner Shaft Hub
+                ctx.beginPath();
+                ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.strokeStyle = '#d4d4d8';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.restore();
+
+                animationFrameId = requestAnimationFrame(draw);
+            }
+
+            draw();
+        }
+
+        // Apply Preset Scenarios (Matching JUnit test cases)
+        function applyPreset(rpm, current, voltage, temp, scenarioName) {
+            document.getElementById('rpmInput').value = rpm;
+            document.getElementById('rpmSlider').value = Math.max(0, rpm);
+
+            document.getElementById('currentInput').value = current;
+            document.getElementById('currentSlider').value = Math.max(0, current);
+
+            document.getElementById('voltageInput').value = voltage;
+            document.getElementById('voltageSlider').value = Math.max(0, voltage);
+
+            document.getElementById('tempInput').value = temp;
+            document.getElementById('tempSlider').value = temp;
+
+            evaluateAndRender();
+            logCurrentSnapshot(scenarioName);
+        }
+
+        function resetToDefaults() {
+            applyPreset(1800, 5.0, 12.0, 45.0, 'Default Setup');
+        }
+
+        // Log snapshot into history table
+        function logCurrentSnapshot(label = 'Manual Snapshot') {
+            logCounter++;
+            const tbody = document.getElementById('log-table-body');
+
+            const rpm = parseFloat(document.getElementById('rpmInput').value) || 0;
+            const current = parseFloat(document.getElementById('currentInput').value) || 0;
+            const voltage = parseFloat(document.getElementById('voltageInput').value) || 0;
+            const temp = parseFloat(document.getElementById('tempInput').value) || 0;
+
+            const statuses = evaluateStatus(rpm, current, voltage, temp);
+            const statusArray = Array.from(statuses).join(', ');
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-zinc-50 transition";
+            tr.innerHTML = `
+                <td class="py-2 px-3 text-zinc-400">${logCounter}</td>
+                <td class="py-2 px-3 text-zinc-500">${new Date().toLocaleTimeString()}</td>
+                <td class="py-2 px-3 font-bold ${rpm < 500 || rpm > 3000 ? 'text-blue-600' : 'text-zinc-800'}">${rpm}</td>
+                <td class="py-2 px-3 font-bold ${current > 10 ? 'text-amber-600' : 'text-zinc-800'}">${current.toFixed(2)}</td>
+                <td class="py-2 px-3 font-bold ${voltage < 10 || voltage > 14 ? 'text-purple-600' : 'text-zinc-800'}">${voltage.toFixed(2)}</td>
+                <td class="py-2 px-3 font-bold ${temp > 80 ? 'text-rose-600' : 'text-zinc-800'}">${temp.toFixed(1)}</td>
+                <td class="py-2 px-3">
+                    <span class="px-2 py-0.5 text-[11px] font-bold rounded ${statuses.has('NORMAL') ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-200 text-zinc-900'}">
+                        [${statusArray}]
+                    </span>
+                    <span class="text-[10px] text-zinc-400 block mt-0.5 font-sans">${label}</span>
+                </td>
+            `;
+
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        function clearLogTable() {
+            document.getElementById('log-table-body').innerHTML = '';
+            logCounter = 0;
+        }
+
+        function toggleDevOpsModal() {
+            const modal = document.getElementById('devops-modal');
+            modal.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
