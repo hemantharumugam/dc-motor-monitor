@@ -28,7 +28,7 @@ public class MotorMonitorTest {
         MotorData data = new MotorData(1800, 5.0, 12.0, 45.0);
         Set<MotorStatus> status = monitor.evaluateStatus(data);
         
-        assertEquals(1, status.size());
+        assertEquals(99, status.size());
         assertTrue(status.contains(MotorStatus.NORMAL));
     }
 
